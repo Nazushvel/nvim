@@ -1,63 +1,61 @@
-if has('win64')
-    if empty(glob('~\vimfiles\autoload\plug.vim'))
-    md ~\vimfiles\autoload
-    $uri = 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-    (New-Object Net.WebClient).DownloadFile(
-	$uri,
-	$ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath(
-	    "~\vimfiles\autoload\plug.vim"
-  )
-)
-    endif
+if empty(glob('~/.config/nvim/autoload/plug.vim'))
+  silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  autocmd VimEnter * PlugInstall | source ~/.config/nvim/init.vim
 endif
-
-if has('unix')
-    if empty(glob('~/.config/nvim/autoload/plug.vim'))
-	silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
-	    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-	autocmd VimEnter * PlugInstall | source ~/.config/nvim/init.vim
-    endif
-endif
-
-if has('unix')
-    call plug#begin('~/.local/share/nvim/plugged')
-endif
-if has('win64')
-    call plug#begin()
-endif
-Plug 'jiangmiao/auto-pairs'
+call plug#begin()
+Plug 'lambdalisue/suda.vim'
 Plug 'morhetz/gruvbox'
-if has('unix')
-    Plug 'autozimu/LanguageClient-neovim', { 'branch': 'next', 'do': 'bash install.sh', }
-endif
-Plug 'Shougo/deoplete.nvim' , { 'do': ':UpdateRemotePlugins' }
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
-if has('win64')
-    Plug 'PProvost/vim-ps1'
-    Plug 'autozimu/LanguageClient-neovim', { 'branch': 'next', 'do': 'powershell -executionpolicy bypass -File install.ps1', }
-endif
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'honza/vim-snippets'
+"Plug 'SirVer/ultisnips'
 call plug#end()
+" appearance
 set background=dark
-colorscheme gruvbox
 set cursorline
 set noshowmode
+" format
 set number
 set shiftwidth=4
 set softtabstop=4
+" keybindings
 let mapleader = ","
 map <leader>n :set invnumber<CR>
-let g:deoplete#enable_at_startup = 1
-set hidden
-if has('unix')
-    let g:LanguageClient_serverCommands = {
-	\ 'python': ['/usr/bin/pyls'],
-	\ }
-endif
-if has('win64')
-    set backupdir=~\backups
-    set directory=~\backups
-    let g:LanguageClient_serverCommands = {
-    \ 'ps1': ['powershell', '-NoProfile', '-NoLogo', '-NonInteractive', '~/Documents/WindowsPowerShell/Modules/PowerShellEditorServices/PowerShellEditorServices/Start-EditorServices.ps1', '-HostName', 'nvim', '-HostProfileId', '0', '-HostVersion', '1.0.0', '-LogPath', '~/pses.log', '-LogLevel', 'Diagnostic', '-BundledModulesPath', '~/Documents/WindowsPowerShell/Modules/PowerShellEditorServices', '-Stdio', '-SessionDetailsPath', '~/.pses.json']
-    \ }
-endif
+" fixes
+command! W :w suda://%
+au BufEnter * set noro " disable readonly warning
+" plugins
+colorscheme gruvbox
+let g:airline_theme='term'
+
+"" Disable Ultisnips keybindings 
+let g:UltiSnipsExpandTrigger = "<NUL>"
+
+"" Coc Config
+
+" global install
+let g:coc_global_extensions=[ 'coc-powershell', 'coc-snippets', 'coc-python', 'coc-pairs', 'coc-explorer' ]
+
+" key bindings mainly tab control
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+" Navigate snippet placeholders using tab
+let g:coc_snippet_next = '<Tab>'
+let g:coc_snippet_prev = '<S-Tab>'
+
+" main coc data location
+let g:coc_data_home = '~/.config/nvim/coc'
+
+" Use enter to accept snippet expansion
+inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<CR>"
